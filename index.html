@@ -9,21 +9,20 @@
     
     <style>
         /* ==========================================
-           CSS DESIGN SECTION (Yahan design change hota hai)
+           CSS DESIGN SECTION
            ========================================== */
         
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap');
 
-        /* Ye sabhi chizon se default styling aur click ka ganda box (outline) hatata hai */
+        /* Default styling aur click box hide */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            outline: none; /* Click karne par aane wala box hata diya */
-            -webkit-tap-highlight-color: transparent; /* Mobile me click karne pe blue color hatata hai */
+            outline: none; 
+            -webkit-tap-highlight-color: transparent; 
         }
 
-        /* Pure page ka background color aur font */
         body {
             font-family: 'Poppins', sans-serif;
             background: #050510; /* Dark Black/Blue Tech Background */
@@ -36,7 +35,6 @@
             overflow-y: auto;
         }
 
-        /* Main daba (container) jiski width set ki hai */
         .container {
             width: 100%;
             max-width: 500px;
@@ -45,24 +43,21 @@
             gap: 25px;
         }
 
-        /* Tech Glow Card (Isme glow effect aur border blur diya hai) */
+        /* Tech Glow Card */
         .card {
-            background: rgba(20, 20, 35, 0.6); /* Thoda transparent black */
+            background: rgba(20, 20, 35, 0.6); 
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(99, 102, 241, 0.3); /* Halka blue border */
+            border: 1px solid rgba(99, 102, 241, 0.3); 
             border-radius: 20px;
             padding: 30px 25px;
-            /* Yahan se TECH GLOW EFFECT aa raha hai */
             box-shadow: 0 0 20px rgba(99, 102, 241, 0.15), inset 0 0 15px rgba(99, 102, 241, 0.05);
             text-align: center;
         }
 
-        /* Card ke upar ka Title Text */
         .header-title {
             font-size: 22px;
             font-weight: 600;
             margin-bottom: 20px;
-            /* Text me gradient color (chamak) dene ke liye */
             background: linear-gradient(135deg, #fff 0%, #818cf8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -72,28 +67,26 @@
             gap: 10px;
         }
 
-        /* Naya Key Dikhane wala Box */
+        /* Generated Key Box */
         .new-key-box {
             background: rgba(99, 102, 241, 0.1);
             border: 1px solid rgba(99, 102, 241, 0.5);
             border-radius: 15px;
             padding: 20px;
             margin-bottom: 5px;
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); /* Glow effect */
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); 
         }
 
-        /* Key ka font style (Space Mono taaki hacker type lage) */
         .key-display {
             font-family: 'Space Mono', monospace;
             font-size: 26px;
             letter-spacing: 3px;
             color: #818cf8;
-            text-shadow: 0 0 10px rgba(129, 140, 248, 0.6); /* Neon text glow */
+            text-shadow: 0 0 10px rgba(129, 140, 248, 0.6); 
             margin: 15px 0;
-            user-select: all; /* Ek click me select hone ke liye */
+            user-select: all; 
         }
 
-        /* Copy Button ka design */
         .btn-copy {
             background: linear-gradient(135deg, #6366f1, #4f46e5);
             border: none;
@@ -106,27 +99,24 @@
             align-items: center;
             gap: 8px;
             transition: all 0.3s;
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); /* Button ke bahar glow */
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); 
         }
 
-        /* Jab mouse button ke upar jaye (Hover effect) */
         .btn-copy:hover {
-            transform: translateY(-3px); /* Thoda upar uthega */
-            box-shadow: 0 0 25px rgba(99, 102, 241, 0.7); /* Glow badh jayega */
+            transform: translateY(-3px); 
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.7); 
         }
 
-        /* Jab button click ho (Active effect) */
         .btn-copy:active {
-            transform: translateY(0px); /* Wapas neeche aayega */
+            transform: translateY(0px); 
             box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
         }
 
-        /* History List (Purani keys ki list) */
+        /* History List */
         .history-section { text-align: left; }
         .section-title { font-size: 16px; font-weight: 500; color: #94a3b8; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
         .keys-list { display: flex; flex-direction: column; gap: 15px; }
 
-        /* Har ek purani key ka box */
         .key-item {
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -138,7 +128,6 @@
             transition: all 0.3s;
         }
 
-        /* Hover karne par halka chamkega */
         .key-item:hover {
             border-color: rgba(99, 102, 241, 0.4);
             box-shadow: 0 0 10px rgba(99, 102, 241, 0.1);
@@ -149,7 +138,7 @@
         .mini-copy { color: #64748b; cursor: pointer; font-size: 15px; transition: color 0.2s; }
         .mini-copy:hover { color: #818cf8; text-shadow: 0 0 5px rgba(129, 140, 248, 0.5); }
 
-        /* Tags/Badges (Unused, Active, Expired) */
+        /* Badges */
         .badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.5px; }
         .badge-unused { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
         .badge-active { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
@@ -159,22 +148,24 @@
         .timer-box { font-family: 'Space Mono', monospace; font-weight: 700; color: #facc15; }
         .timer-box.expired { color: #ef4444; }
 
-        /* Khali List ka Message */
+        /* Empty State */
         .empty-state { text-align: center; padding: 30px 10px; color: #475569; font-size: 14px; }
         .empty-state i { font-size: 40px; margin-bottom: 12px; display: block; color: #334155; }
 
-        /* Loading Spinner */
+        /* General Loader */
         .loader-container { display: flex; flex-direction: column; align-items: center; gap: 15px; padding: 20px 0; }
         .spinner { width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.05); border-radius: 50%; border-top-color: #818cf8; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Pop-up message jab key copy ho (Toast) */
+        /* ==========================================
+           FIX 1: Toast Pop-up Fixed (Ab hamesha chupa rahega)
+           ========================================== */
         .toast {
             position: fixed;
-            bottom: -60px;
+            bottom: -100px; /* Thoda aur niche kiya */
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(16, 185, 129, 0.9);
+            background: rgba(16, 185, 129, 0.95);
             backdrop-filter: blur(5px);
             color: white;
             padding: 12px 30px;
@@ -182,44 +173,88 @@
             font-weight: 500;
             font-size: 14px;
             box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
-            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             z-index: 2000;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            opacity: 0; /* Jab tak show na ho, gayab rahega */
+            visibility: hidden;
         }
-        .toast.show { bottom: 30px; }
+        
+        .toast.show { 
+            bottom: 30px; 
+            opacity: 1; /* Show hone par dikhega */
+            visibility: visible;
+        }
+
+        /* ==========================================
+           FEATURE 2: Promotion Box (Developer Box) Design
+           ========================================== */
+        .promo-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: rgba(20, 20, 35, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            border-radius: 50px; /* Pill Shape */
+            padding: 8px 25px;
+            text-decoration: none; /* Link ka underline hataya */
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .promo-box:hover {
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.5);
+            transform: translateY(-2px);
+            border-color: rgba(99, 102, 241, 0.8);
+            background: rgba(30, 30, 50, 0.8);
+        }
+
+        .promo-box img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%; /* Image ko gol kiya */
+            object-fit: cover;
+            border: 2px solid #818cf8; /* Image ke bahar glowing border */
+            box-shadow: 0 0 10px rgba(129, 140, 248, 0.5);
+        }
+
+        .promo-box span {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         
-        <!-- NAYA KEY GENERATE HONE WALA DABA (Card) -->
+        <!-- Key Generation Card -->
         <div class="card" id="generationCard" style="display: none;">
-            
-            <!-- Loading animation jab code check kar raha ho -->
             <div id="genLoader" class="loader-container">
                 <div class="spinner"></div>
                 <p style="color: #94a3b8; font-size: 14px;">Generating secure access key...</p>
             </div>
             
-            <!-- Key banne ke baad ka design -->
             <div id="genResult" class="new-key-box" style="display: none;">
                 <div class="header-title" style="margin-bottom: 5px;">
                     <i class="fa-solid fa-bolt" style="color: #fbbf24;"></i> Key Generated!
                 </div>
                 <p style="color: #94a3b8; font-size: 12px; margin-bottom: 10px;">Valid for the next 24 Hours</p>
                 
-                <!-- Yahan generated key aayegi -->
                 <div class="key-display" id="newKeyValue">PH-XXXXXX</div>
                 
-                <!-- Copy Button -->
                 <button class="btn-copy" onclick="copyText(document.getElementById('newKeyValue').innerText)">
                     <i class="fa-solid fa-clipboard"></i> Copy to App
                 </button>
             </div>
         </div>
 
-        <!-- PURANI KEYS KI HISTORY DIKHANE WALA DABA (Card) -->
+        <!-- History Dashboard Card -->
         <div class="card">
             <div class="header-title">
                 <i class="fa-solid fa-microchip" style="color: #818cf8;"></i> Live Dashboard
@@ -234,16 +269,24 @@
                     <div class="spinner"></div>
                 </div>
 
-                <!-- History list yahan generate hogi -->
                 <div class="keys-list" id="keysContainer" style="display: none;"></div>
 
-                <!-- Agar koi key nahi banayi hai, toh ye dikhega -->
                 <div class="empty-state" id="emptyState" style="display: none;">
                     <i class="fa-solid fa-box-open"></i>
                     No active keys found.<br>Generate one from the App link.
                 </div>
             </div>
         </div>
+
+        <!-- ==========================================
+             FEATURE 2: Developer Promotion Link Box
+             ========================================== -->
+        <!-- Link ko target="_blank" diya hai taaki click karne par Telegram naye tab me khule -->
+        <a href="https://t.me/+4hk87cVq1GUyMTNl" target="_blank" class="promo-box">
+            <!-- logo.png yahan par set hai, isko HTML file ke sath same folder me upload karna -->
+            <img src="logo.png" alt="Developer Logo">
+            <span>Developer Prince Hacks</span>
+        </a>
 
     </div>
 
@@ -252,13 +295,12 @@
 
 
     <!-- ==========================================
-         JAVASCRIPT LOGIC SECTION (Dimag yahan chal raha hai)
+         JAVASCRIPT LOGIC SECTION
          ========================================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
-        // Aapki Firebase Settings
         const firebaseConfig = {
             apiKey: "AIzaSyD9hHDcTFh0a-3eSsXJ-sdD4_U78bsagYA",
             authDomain: "prince-hacks-test.firebaseapp.com",
@@ -273,41 +315,41 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // URL check karna ki usme "?secure=true" hai ya nahi
         const urlParams = new URLSearchParams(window.location.search);
         const isSecretAccess = urlParams.get('secure') === 'true'; 
         
-        // Browser memory se purani keys nikalna
         let userKeysArray = JSON.parse(localStorage.getItem('ph_dashboard_keys')) || [];
+        
+        // Agar system loading par 5 se jyada key milti hai (Purani save ki hui) 
+        // toh unme se extra keys delete kar dega
+        if (userKeysArray.length > 5) {
+            userKeysArray = userKeysArray.slice(-5);
+            localStorage.setItem('ph_dashboard_keys', JSON.stringify(userKeysArray));
+        }
+
         let firebaseDataCache = {};
 
-        // MAIN UPDATE 1: Key Length (Ab 6 digit ka random word banega)
         function generateShortKey() {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             let randomPart = '';
-            // Yahan 6 kiya hai taaki exactly 6 akshar nikle
             for (let i = 0; i < 6; i++) {
                 randomPart += chars[Math.floor(Math.random() * chars.length)];
             }
-            return `PH-${randomPart}`; // Total output: PH-XXXXXX
+            return `PH-${randomPart}`; 
         }
 
-        // System Start Function
         async function initSystem() {
             
-            // MAIN UPDATE 2: URL se "?secure=true" hatana bina page refresh kiye
-            // Agar link me secure=true hai, toh usko turant saaf karke original link bana do
             if (isSecretAccess) {
+                // Link se secure tag hamesha chupa do
                 window.history.replaceState({}, document.title, window.location.pathname);
                 document.getElementById('generationCard').style.display = 'block';
 
                 const lastGenTime = localStorage.getItem('ph_last_gen_time');
                 const now = new Date().getTime();
-                const cooldownTime = 24 * 60 * 60 * 1000; // 24 Ghante
+                const cooldownTime = 24 * 60 * 60 * 1000; 
 
-                // Check karo ki pichle 24 ghante me key ban chuki hai ya nahi
                 if (lastGenTime && (now - parseInt(lastGenTime)) < cooldownTime) {
-                    // Agar time nahi bita, toh nayi key mat banao, Spam Warning do
                     document.getElementById('genLoader').style.display = 'none';
                     document.getElementById('genResult').style.display = 'block';
                     document.getElementById('genResult').innerHTML = `
@@ -315,25 +357,20 @@
                         <p style="color: #94a3b8; font-size: 13px; margin-bottom: 10px;">Aap apni daily key pehle hi generate kar chuke hain. Kripya niche Dashboard me dekhein.</p>
                     `;
                 } else {
-                    // Agar 24 ghante pure ho gaye, toh Database me nayi key daalo
                     await createAndRegisterKey();
-                    localStorage.setItem('ph_last_gen_time', now.toString()); // Time save kar lo
+                    localStorage.setItem('ph_last_gen_time', now.toString()); 
                 }
             }
             
-            // Purani history aur Live Status load karo
             setupRealtimeSync();
-            // Timer engine chalu karo
             startCountdownEngine();
         }
 
-        // Firebase me Naya key dalne ka function
         async function createAndRegisterKey() {
-            const newKey = generateShortKey(); // 'PH-XXXXXX' key banayega
+            const newKey = generateShortKey(); 
             const keyRef = ref(db, 'ActiveUserKeys/' + newKey);
 
             try {
-                // Database me data save karna
                 await set(keyRef, {
                     createdAt: serverTimestamp(),
                     durationHours: 24,
@@ -341,13 +378,22 @@
                     boundDeviceId: "NONE"
                 });
 
-                // Browser history list me add karna
                 if (!userKeysArray.includes(newKey)) {
+                    // Nayi key array ke end me daali
                     userKeysArray.push(newKey);
+                    
+                    // ==========================================
+                    // FEATURE 4: LIMIT HISTORY TO 5 KEYS
+                    // Agar keys 5 se zyada ho jayein, toh sabse pehli (oldest) delete kar do
+                    // ==========================================
+                    if (userKeysArray.length > 5) {
+                        userKeysArray.shift(); // shift() array se sabse pehla element hata deta hai
+                    }
+                    
+                    // Update LocalStorage
                     localStorage.setItem('ph_dashboard_keys', JSON.stringify(userKeysArray));
                 }
 
-                // UI me dikhana
                 document.getElementById('newKeyValue').innerText = newKey;
                 document.getElementById('genLoader').style.display = 'none';
                 document.getElementById('genResult').style.display = 'block';
@@ -358,7 +404,6 @@
             }
         }
 
-        // Firebase se har key ka Live Status Check karna (Realtime)
         function setupRealtimeSync() {
             if (userKeysArray.length === 0) {
                 document.getElementById('historyLoader').style.display = 'none';
@@ -371,26 +416,24 @@
 
             userKeysArray.forEach(key => {
                 const keyRef = ref(db, 'ActiveUserKeys/' + key);
-                // onValue: Jab bhi database change hoga, ye function khud chalega
                 onValue(keyRef, (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
-                        firebaseDataCache[key] = data; // Data save
+                        firebaseDataCache[key] = data; 
                     } else {
-                        firebaseDataCache[key] = { expiredOffline: true }; // Data delete ho gaya
+                        firebaseDataCache[key] = { expiredOffline: true }; 
                     }
 
                     loadedCount++;
                     if (loadedCount >= userKeysArray.length) {
                         document.getElementById('historyLoader').style.display = 'none';
                         document.getElementById('keysContainer').style.display = 'flex';
-                        renderDashboardUI(); // Box me history draw karo
+                        renderDashboardUI(); 
                     }
                 });
             });
         }
 
-        // Dashboard me html code (Boxes) bana kar dikhana
         function renderDashboardUI() {
             const container = document.getElementById('keysContainer');
             container.innerHTML = ''; 
@@ -411,7 +454,7 @@
                     badgeText = 'Expired';
                 } else if (data.boundDeviceId && data.boundDeviceId !== 'NONE') {
                     badgeClass = 'badge-active';
-                    badgeText = 'Active'; // Device connect hote hi active dikhega
+                    badgeText = 'Active'; 
                 }
 
                 itemDiv.innerHTML = `
@@ -431,7 +474,6 @@
             });
         }
 
-        // Har 1 second me Timer kam karne wala Function
         function startCountdownEngine() {
             setInterval(() => {
                 if (userKeysArray.length === 0) return;
@@ -451,7 +493,6 @@
                     const createdAtTime = data.createdAt;
                     if (!createdAtTime) return;
 
-                    // 24 Hours ka formula (Milliseconds me)
                     const expiryTime = createdAtTime + (24 * 60 * 60 * 1000); 
                     const distance = expiryTime - now;
 
@@ -459,7 +500,6 @@
                         timerElement.innerText = "EXPIRED";
                         timerElement.className = "timer-box expired";
                         
-                        // Badge ko bhi Expired color kar do
                         const itemElement = document.getElementById(`item-${key}`);
                         if (itemElement) {
                             const badge = itemElement.querySelector('.badge');
@@ -469,7 +509,6 @@
                             }
                         }
                     } else {
-                        // Time ko ghante (h), minute (m), second (s) me badalna
                         const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
@@ -477,31 +516,24 @@
                         timerElement.innerText = `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
                     }
                 });
-            }, 1000); // 1000ms = 1 second
+            }, 1000); 
         }
 
-        // Website load hote hi system chalu karo
         window.onload = initSystem;
     </script>
 
-    <!-- ==========================================
-         COPY TO CLIPBOARD FUNCTION
-         ========================================== -->
+    <!-- Copy Function -->
     <script>
-        // MAIN UPDATE 3: Copy to Clipboard
-        // Yeh function Keyboard ke clipboard me key copy karta hai
         function copyText(textToCopy) {
-            if (textToCopy.includes('XXXX')) return; // Agar key bani nahi hai toh ignore karo
+            if (textToCopy.includes('XXXX')) return; 
             
-            // navigator.clipboard user ke mobile/pc keyboard par seedha text copy karta hai
             navigator.clipboard.writeText(textToCopy).then(() => {
                 const toast = document.getElementById('toast');
-                toast.classList.add('show'); // Pop-up dikhao
+                toast.classList.add('show'); 
                 
-                // 2.5 second baad pop-up chupa do
                 setTimeout(() => { toast.classList.remove('show'); }, 2500);
             }).catch(err => {
-                alert("Copy failed: " + err); // Agar browser support na kare toh error dikhao
+                alert("Copy failed: " + err); 
             });
         }
     </script>
