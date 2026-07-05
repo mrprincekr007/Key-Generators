@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Key Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #090d16, #020617);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+            overflow-y: auto;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        /* Premium Glassmorphism Card */
+        .card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            padding: 30px 25px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* Generated Key Box */
+        .new-key-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.05));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 5px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .key-display {
+            font-family: 'Space Mono', monospace;
+            font-size: 24px;
+            letter-spacing: 2px;
+            color: #6366f1;
+            text-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            margin: 10px 0 15px 0;
+            user-select: all;
+        }
+
+        .btn-copy {
+            background: #6366f1;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        /* History List Section */
+        .history-section {
+            text-align: left;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #94a3b8;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .keys-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .key-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+            transition: border-color 0.3s;
+        }
+
+        .key-item:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .key-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .key-text {
+            font-family: 'Space Mono', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mini-copy {
+            color: #64748b;
+            cursor: pointer;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .mini-copy:hover {
+            color: #fff;
+        }
+
+        /* Badges / Status Pills */
+        .badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-unused { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-active { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); animation: pulse 2s infinite; }
+        .badge-expired { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .key-item-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .timer-box {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            color: #f59e0b;
+        }
+
+        .timer-box.expired {
+            color: #ef4444;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 30px 10px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .empty-state i {
+            font-size: 40px;
+            margin-bottom: 12px;
+            display: block;
+            color: #334155;
+        }
+
+        /* General Loader */
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 20px 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            border-top-color: #6366f1;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10b981;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: 0 15px 30px rgba(16, 185, 129, 0.3);
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2000;
+        }
+
+        .toast.show { bottom: 30px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div class="card" id="generationCard" style="display: none;">
+            <div id="genLoader" class="loader-container">
+                <div class="spinner"></div>
+                <p style="color: #94a3b8; font-size: 14px;">Validating secret link & generating key...</p>
+            </div>
+            
+            <div id="genResult" class="new-key-box" style="display: none;">
+                <div class="header-title" style="margin-bottom: 5px;">New Key Generated! 🎉</div>
+                <p style="color: #94a3b8; font-size: 12px; margin-bottom: 10px;">Your 24-hour access token is ready</p>
+                <div class="key-display" id="newKeyValue">PH-XXXXXXXX</div>
+                <button class="btn-copy" onclick="copyText(document.getElementById('newKeyValue').innerText)">
+                    <i class="fa-regular fa-copy"></i> Copy Key
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="header-title">
+                <i class="fa-solid fa-shield-halved" style="color: #6366f1;"></i> Access Dashboard
+            </div>
+
+            <div class="history-section">
+                <div class="section-title">
+                    <i class="fa-solid fa-clock-history"></i> Your Keys & Status
+                </div>
+
+                <div id="historyLoader" class="loader-container">
+                    <div class="spinner"></div>
+                </div>
+
+                <div class="keys-list" id="keysContainer" style="display: none;">
+                    </div>
+
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <i class="fa-regular fa-folder-open"></i>
+                    No keys generated yet. Please visit through the official app link to create one.
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="toast" id="toast">Key copied to clipboard! ✅</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+
+        // Your Exact Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9hHDcTFh0a-3eSsXJ-sdD4_U78bsagYA",
+            authDomain: "prince-hacks-test.firebaseapp.com",
+            databaseURL: "https://prince-hacks-test-default-rtdb.firebaseio.com",
+            projectId: "prince-hacks-test",
+            storageBucket: "prince-hacks-test.firebasestorage.app",
+            messagingSenderId: "1070897490445",
+            appId: "1:1070897490445:web:17b1cb1461fd76bb888344",
+            measurementId: "G-8HF61FHCWN"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // System Variables
+        const urlParams = new URLSearchParams(window.location.search);
+        const isSecretAccess = urlParams.get('secure') === 'true'; // Checks for ?secure=true
+        let userKeysArray = JSON.parse(localStorage.getItem('ph_dashboard_keys')) || [];
+        let firebaseDataCache = {};
+
+        // Short 8 Character Random Alphanumeric Generator with PH- Prefix
+        function generateShortKey() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let randomPart = '';
+            for (let i = 0; i < 8; i++) {
+                randomPart += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return `PH-${randomPart}`;
+        }
+
+        // Initialize Core Process
+        async function initSystem() {
+            if (isSecretAccess) {
+                document.getElementById('generationCard').style.display = 'block';
+                await createAndRegisterKey();
+            }
+            
+            setupRealtimeSync();
+            startCountdownEngine();
+        }
+
+        // Write new short key with PH- prefix to Firebase
+        async function createAndRegisterKey() {
+            const newKey = generateShortKey();
+            const keyRef = ref(db, 'ActiveUserKeys/' + newKey);
+
+            try {
+                await set(keyRef, {
+                    createdAt: serverTimestamp(), // Strict Server Timing
+                    durationHours: 24,
+                    isUsed: false,
+                    boundDeviceId: "NONE"
+                });
+
+                // Update local storage array history
+                if (!userKeysArray.includes(newKey)) {
+                    userKeysArray.push(newKey);
+                    localStorage.setItem('ph_dashboard_keys', JSON.stringify(userKeysArray));
+                }
+
+                // Show generation container data
+                document.getElementById('newKeyValue').innerText = newKey;
+                document.getElementById('genLoader').style.display = 'none';
+                document.getElementById('genResult').style.display = 'block';
+
+            } catch (err) {
+                console.error("Firebase write error:", err);
+                document.getElementById('genLoader').innerHTML = '<p style="color:#ef4444;">Database link error!</p>';
+            }
+        }
+
+        // Sync keys from Firebase in real-time to listen for login activation changes
+        function setupRealtimeSync() {
+            if (userKeysArray.length === 0) {
+                document.getElementById('historyLoader').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+
+            let loadedCount = 0;
+            document.getElementById('emptyState').style.display = 'none';
+
+            userKeysArray.forEach(key => {
+                const keyRef = ref(db, 'ActiveUserKeys/' + key);
+                onValue(keyRef, (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        firebaseDataCache[key] = data;
+                    } else {
+                        // Key missing or deleted from database server
+                        firebaseDataCache[key] = { expiredOffline: true };
+                    }
+
+                    loadedCount++;
+                    if (loadedCount >= userKeysArray.length) {
+                        document.getElementById('historyLoader').style.display = 'none';
+                        document.getElementById('keysContainer').style.display = 'flex';
+                        renderDashboardUI();
+                    }
+                });
+            });
+        }
+
+        // Render Dashboard UI with real-time variables
+        function renderDashboardUI() {
+            const container = document.getElementById('keysContainer');
+            container.innerHTML = ''; // Fresh DOM render clear
+
+            userKeysArray.slice().reverse().forEach(key => {
+                const data = firebaseDataCache[key];
+                if (!data) return;
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'key-item';
+                itemDiv.id = `item-${key}`;
+
+                // Determine precise UI badges and markers
+                let badgeClass = 'badge-unused';
+                let badgeText = 'Unused';
+                
+                if (data.expiredOffline) {
+                    badgeClass = 'badge-expired';
+                    badgeText = 'Expired';
+                } else if (data.boundDeviceId && data.boundDeviceId !== 'NONE') {
+                    badgeClass = 'badge-active';
+                    badgeText = 'Active';
+                }
+
+                itemDiv.innerHTML = `
+                    <div class="key-item-header">
+                        <div class="key-text">
+                            ${key} 
+                            <i class="fa-regular fa-copy mini-copy" onclick="copyText('${key}')"></i>
+                        </div>
+                        <span class="badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <div class="key-item-footer">
+                        <span>Time Remaining:</span>
+                        <span class="timer-box" id="timer-${key}">Calculating...</span>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        // Global interval engine running calculations every 1 second
+        function startCountdownEngine() {
+            setInterval(() => {
+                if (userKeysArray.length === 0) return;
+
+                userKeysArray.forEach(key => {
+                    const data = firebaseDataCache[key];
+                    const timerElement = document.getElementById(`timer-${key}`);
+                    if (!timerElement || !data) return;
+
+                    if (data.expiredOffline) {
+                        timerElement.innerText = "EXPIRED";
+                        timerElement.className = "timer-box expired";
+                        return;
+                    }
+
+                    const now = new Date().getTime();
+                    const createdAtTime = data.createdAt;
+                    
+                    if (!createdAtTime) return;
+
+                    const expiryTime = createdAtTime + (24 * 60 * 60 * 1000); // 24hr expiration formula
+                    const distance = expiryTime - now;
+
+                    if (distance < 0) {
+                        timerElement.innerText = "EXPIRED";
+                        timerElement.className = "timer-box expired";
+                        
+                        // Update status pill wrapper to Expired UI natively
+                        const itemElement = document.getElementById(`item-${key}`);
+                        if (itemElement) {
+                            const badge = itemElement.querySelector('.badge');
+                            if (badge && !badge.classList.contains('badge-expired')) {
+                                badge.className = 'badge badge-expired';
+                                badge.innerText = 'Expired';
+                            }
+                        }
+                    } else {
+                        // Hour, Minute, Second dynamic formatting
+                        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                        timerElement.innerText = `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+                    }
+                });
+            }, 1000);
+        }
+
+        // Boot system execution
+        window.onload = initSystem;
+    </script>
+
+    <script>
+        function copyText(textToCopy) {
+            if (textToCopy.includes('XXXX')) return;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(() => { toast.classList.remove('show'); }, 2500);
+            });
+        }
+    </script>
+</body>
+</html>
