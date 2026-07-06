@@ -4,7 +4,7 @@ import { db } from "./firebase-config.js";
 import { getDatabase, ref, set, onValue, serverTimestamp, remove, push } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
 // System State Variables
-let sysSettings = { cooldownHours: 24, maxKeysLimit: 5, maintenanceMode: false, userParam: 'secure=true', adminParam: 'admin=true' };
+let sysSettings = { cooldownHours: 24, maxKeysLimit: 5, maintenanceMode: false, userParam: 'secure=true', adminParam: 'admin=true', defaultKeyDuration: 24 };
 let externalDbs = []; 
 let isSettingsLoaded = false;
 let isHubLoaded = false;
@@ -16,7 +16,13 @@ let userKeysArray = JSON.parse(localStorage.getItem('ph_dashboard_keys')) || [];
 // 1. Fetch Rules & Hub Servers from Master Firebase
 onValue(ref(db, 'SystemSettings'), (snapshot) => {
     if(snapshot.exists()) {
-        sysSettings = { ...sysSettings, ...snapshot.val() };
+        const data = snapshot.val();
+        sysSettings = { ...sysSettings, ...data };
+        // Ensure defaultKeyDuration is set
+        if (!data.defaultKeyDuration) {
+            // If not set, set default to 24 hours
+            sysSettings.defaultKeyDuration = 24;
+        }
     }
     isSettingsLoaded = true;
     triggerSystemInit();
@@ -108,13 +114,16 @@ function generateShortKey() {
     return `PH-${randomPart}`; 
 }
 
-// 3. Central Hub Routing: Save ONLY to Mirror DBs (Main Firebase is admin-only now)
+// 3. Central Hub Routing: Save ONLY to Mirror DBs
 async function createAndRegisterKey() {
     const newKey = generateShortKey(); 
     
+    // Read default duration from SystemSettings (set by admin)
+    const defaultDuration = sysSettings.defaultKeyDuration || 24;
+    
     const kData = {
         createdAt: serverTimestamp(),
-        durationHours: 24, 
+        durationHours: defaultDuration,
         isUsed: false,
         boundDeviceId: "NONE",
         type: "Normal"
@@ -132,13 +141,6 @@ async function createAndRegisterKey() {
         }
 
         if(successCount === 0) throw new Error("All servers failed to respond");
-
-        // Stat trackers on Main Firebase (only if admin is authenticated, but we are not)
-        // Since user is not authenticated, these will fail. We remove them.
-        // Admin panel will track stats via its own generation, not user panel.
-        // So we skip stats update here.
-
-        // Log activity on Main Firebase? Not needed; admin panel logs admin actions only.
 
         // Update local storage
         if (!userKeysArray.includes(newKey)) {
