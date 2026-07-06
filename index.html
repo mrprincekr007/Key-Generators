@@ -12,27 +12,39 @@
 
     <div class="container">
         
+        <div class="card" id="maintenanceCard" style="display: none; border-color: #facc15;">
+            <i class="fa-solid fa-person-digging" style="font-size: 50px; color: #facc15; margin-bottom: 15px; display:block; text-align:center;"></i>
+            <h2 style="color: #fff; margin-bottom: 10px; text-align:center;">Maintenance Break</h2>
+            <p style="color: #94a3b8; font-size: 14px; text-align:center;">Server par update chal raha hai. Kripya kuch samay baad aayen.</p>
+        </div>
+
+        <div class="card" id="errorCard" style="display: none; border-color: #ef4444;">
+            <i class="fa-solid fa-server" style="font-size: 50px; color: #ef4444; margin-bottom: 15px; display:block; text-align:center;"></i>
+            <h2 style="color: #fff; margin-bottom: 10px; text-align:center;">Servers Offline</h2>
+            <p style="color: #94a3b8; font-size: 14px; text-align:center;" id="errorMsg">Admin ne abhi tak koi database server connect nahi kiya hai.</p>
+        </div>
+
         <div class="card" id="generationCard" style="display: none;">
             <div id="genLoader" class="loader-container">
                 <div class="spinner"></div>
-                <p style="color: #94a3b8; font-size: 14px;">Generating secure access key...</p>
+                <p style="color: #94a3b8; font-size: 14px; margin-top: 10px;">Connecting to Hub Servers...</p>
             </div>
             
             <div id="genResult" class="new-key-box" style="display: none;">
-                <div class="header-title" style="margin-bottom: 5px;">
+                <div class="header-title" style="margin-bottom: 5px;" id="genTitle">
                     <i class="fa-solid fa-bolt" style="color: #fbbf24;"></i> Key Generated!
                 </div>
-                <p style="color: #94a3b8; font-size: 12px; margin-bottom: 10px;">Valid for the next 24 Hours</p>
+                <p style="color: #94a3b8; font-size: 12px; margin-bottom: 10px;" id="genDesc">Valid for the next 24 Hours</p>
                 
                 <div class="key-display" id="newKeyValue">PH-XXXXXX</div>
                 
-                <button class="btn-copy" onclick="copyText(document.getElementById('newKeyValue').innerText)">
+                <button class="btn-copy" id="copyBtn" onclick="copyText(document.getElementById('newKeyValue').innerText)">
                     <i class="fa-solid fa-clipboard"></i> Copy to App
                 </button>
             </div>
         </div>
 
-        <div class="card">
+        <div class="card" id="dashboardCard">
             <div class="header-title">
                 <i class="fa-solid fa-microchip" style="color: #818cf8;"></i> Live Dashboard
             </div>
@@ -56,7 +68,7 @@
         </div>
 
         <a href="https://t.me/+4hk87cVq1GUyMTNl" target="_blank" class="promo-box">
-            <img src="logo.png" alt="Developer Logo">
+            <img src="logo.png" alt="Developer Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
             <span>Developer Prince Hacks</span>
         </a>
 

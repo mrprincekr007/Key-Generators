@@ -1,3 +1,7 @@
+/* =========================================
+   USER PANEL COMPLETE PREMIUM CSS
+========================================= */
+
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap');
 
 * {
@@ -28,6 +32,7 @@ body {
     gap: 25px;
 }
 
+/* BASE CARD DESIGN */
 .card {
     background: rgba(20, 20, 35, 0.6); 
     backdrop-filter: blur(10px);
@@ -38,6 +43,20 @@ body {
     text-align: center;
 }
 
+/* SYSTEM ALERT CARDS (New Additions) */
+#maintenanceCard {
+    background: rgba(250, 204, 21, 0.05); 
+    border-color: rgba(250, 204, 21, 0.4);
+    box-shadow: 0 0 20px rgba(250, 204, 21, 0.1);
+}
+
+#errorCard {
+    background: rgba(239, 68, 68, 0.05); 
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.1);
+}
+
+/* TYPOGRAPHY */
 .header-title {
     font-size: 22px;
     font-weight: 600;
@@ -51,6 +70,7 @@ body {
     gap: 10px;
 }
 
+/* GENERATOR BOXES */
 .new-key-box {
     background: rgba(99, 102, 241, 0.1);
     border: 1px solid rgba(99, 102, 241, 0.5);
@@ -70,6 +90,7 @@ body {
     user-select: all; 
 }
 
+/* COPY BUTTON */
 .btn-copy {
     background: linear-gradient(135deg, #6366f1, #4f46e5);
     border: none;
@@ -80,6 +101,8 @@ body {
     cursor: pointer;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    width: 100%;
     gap: 8px;
     transition: all 0.3s;
     box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); 
@@ -95,6 +118,7 @@ body {
     box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
 }
 
+/* HISTORY & DASHBOARD SECTION */
 .history-section { text-align: left; }
 .section-title { font-size: 16px; font-weight: 500; color: #94a3b8; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
 .keys-list { display: flex; flex-direction: column; gap: 15px; }
@@ -120,6 +144,7 @@ body {
 .mini-copy { color: #64748b; cursor: pointer; font-size: 15px; transition: color 0.2s; }
 .mini-copy:hover { color: #818cf8; text-shadow: 0 0 5px rgba(129, 140, 248, 0.5); }
 
+/* BADGES */
 .badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.5px; }
 .badge-unused { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
 .badge-active { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
@@ -129,6 +154,7 @@ body {
 .timer-box { font-family: 'Space Mono', monospace; font-weight: 700; color: #facc15; }
 .timer-box.expired { color: #ef4444; }
 
+/* UTILITIES */
 .empty-state { text-align: center; padding: 30px 10px; color: #475569; font-size: 14px; }
 .empty-state i { font-size: 40px; margin-bottom: 12px; display: block; color: #334155; }
 
@@ -136,6 +162,7 @@ body {
 .spinner { width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.05); border-radius: 50%; border-top-color: #818cf8; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* TOAST ANIMATION */
 .toast {
     position: fixed;
     bottom: -100px; 
@@ -162,6 +189,7 @@ body {
     visibility: visible;
 }
 
+/* PROMO BOX (Telegram Link) */
 .promo-box {
     display: flex;
     align-items: center;

@@ -1,61 +1,90 @@
-// firebase-config.js se apna database (db) import kar rahe hain
-import { db } from "./firebase-config.js";
-import { ref, set, onValue, serverTimestamp, remove } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+// script.js
+import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+import { db } from "./firebase-config.js"; 
+import { getDatabase, ref, set, onValue, serverTimestamp, remove, push } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
-const urlParams = new URLSearchParams(window.location.search);
-
-// 2 Alag-Alag Link Variables
-const isSecretAccess = urlParams.get('secure') === 'true'; // Normal user ke liye
-const isAdminAccess = urlParams.get('admin') === 'true'; // Admin Bypass ke liye (UNLIMITED)
-
-let userKeysArray = JSON.parse(localStorage.getItem('ph_dashboard_keys')) || [];
-
-// Dashboard me abhi bhi max 5 keys hi dikhengi taaki UI kharab na ho
-if (userKeysArray.length > 5) {
-    userKeysArray = userKeysArray.slice(-5);
-    localStorage.setItem('ph_dashboard_keys', JSON.stringify(userKeysArray));
-}
+// System State Variables
+let sysSettings = { cooldownHours: 24, maxKeysLimit: 5, maintenanceMode: false, userParam: 'secure=true', adminParam: 'admin=true' };
+let externalDbs = []; 
+let isSettingsLoaded = false;
+let isHubLoaded = false;
+let initFired = false;
 
 let firebaseDataCache = {};
+let userKeysArray = JSON.parse(localStorage.getItem('ph_dashboard_keys')) || [];
 
-function generateShortKey() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let randomPart = '';
-    for (let i = 0; i < 6; i++) {
-        randomPart += chars[Math.floor(Math.random() * chars.length)];
+// 1. Fetch Rules & Hub Servers from Master Firebase
+onValue(ref(db, 'SystemSettings'), (snapshot) => {
+    if(snapshot.exists()) {
+        sysSettings = { ...sysSettings, ...snapshot.val() };
     }
-    return `PH-${randomPart}`; 
+    isSettingsLoaded = true;
+    triggerSystemInit();
+});
+
+onValue(ref(db, 'ConnectedFirebases'), (snapshot) => {
+    externalDbs = [];
+    if(snapshot.exists()) {
+        snapshot.forEach(child => {
+            try {
+                let app;
+                try { app = getApp(child.key); } 
+                catch(e) { app = initializeApp(child.val(), child.key); }
+                externalDbs.push(getDatabase(app));
+            } catch(e) { console.error("Mirror Load Error", e); }
+        });
+    }
+    isHubLoaded = true;
+    triggerSystemInit();
+    if(initFired) setupRealtimeSync(); 
+});
+
+// 2. Initialize App when Data is Ready
+function triggerSystemInit() {
+    if(isSettingsLoaded && isHubLoaded && !initFired) {
+        initFired = true;
+        checkAccessAndRun();
+    }
 }
 
-async function initSystem() {
-    // Agar link user wala hai YA admin wala hai
+function checkAccessAndRun() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userQuery = sysSettings.userParam.split('=');
+    const adminQuery = sysSettings.adminParam.split('=');
+
+    const isSecretAccess = urlParams.get(userQuery[0]) === userQuery[1];
+    const isAdminAccess = urlParams.get(adminQuery[0]) === adminQuery[1];
+
+    if (sysSettings.maintenanceMode && !isAdminAccess) {
+        document.getElementById('maintenanceCard').style.display = 'block';
+        document.getElementById('generationCard').style.display = 'none';
+        setupRealtimeSync();
+        startCountdownEngine();
+        return;
+    }
+
     if (isSecretAccess || isAdminAccess) {
-        // Link hide karna taaki URL clean ho jaye
         window.history.replaceState({}, document.title, window.location.pathname);
         document.getElementById('generationCard').style.display = 'block';
 
+        if(externalDbs.length === 0) {
+            document.getElementById('generationCard').style.display = 'none';
+            document.getElementById('errorCard').style.display = 'block';
+            setupRealtimeSync();
+            return;
+        }
+
         const lastGenTime = localStorage.getItem('ph_last_gen_time');
         const now = new Date().getTime();
-        const cooldownTime = 24 * 60 * 60 * 1000; 
+        const cooldownTime = sysSettings.cooldownHours * 60 * 60 * 1000;
 
-        // ADMIN BYPASS LOGIC
         if (isAdminAccess) {
-            // Admin ke liye koi time check nahi hoga, direct key banegi
-            await createAndRegisterKey();
-        } 
-        // NORMAL USER LOGIC
-        else if (lastGenTime && (now - parseInt(lastGenTime)) < cooldownTime) {
-            // Agar normal user hai aur 24 ghante nahi hue, toh limit laga do
-            document.getElementById('genLoader').style.display = 'none';
-            document.getElementById('genResult').style.display = 'block';
-            document.getElementById('genResult').innerHTML = `
-                <div class="header-title" style="margin-bottom: 5px; color: #facc15;"><i class="fa-solid fa-shield"></i> Anti-Spam Active</div>
-                <p style="color: #94a3b8; font-size: 13px; margin-bottom: 10px;">Aap apni daily key pehle hi generate kar chuke hain. Kripya niche Dashboard me dekhein.</p>
-            `;
+            createAndRegisterKey(); 
+        } else if (lastGenTime && (now - parseInt(lastGenTime)) < cooldownTime) {
+            showAntiSpamUI();
         } else {
-            // Normal user pehli baar aaya hai, toh key banao aur time save karo
-            await createAndRegisterKey();
-            localStorage.setItem('ph_last_gen_time', now.toString()); 
+            createAndRegisterKey();
+            localStorage.setItem('ph_last_gen_time', now.toString());
         }
     }
     
@@ -63,55 +92,94 @@ async function initSystem() {
     startCountdownEngine();
 }
 
+function showAntiSpamUI() {
+    document.getElementById('genLoader').style.display = 'none';
+    document.getElementById('genResult').style.display = 'block';
+    document.getElementById('genTitle').innerHTML = `<i class="fa-solid fa-shield" style="color: #facc15;"></i> Limit Reached`;
+    document.getElementById('genDesc').innerText = `Aap ek key pehle hi generate kar chuke hain. Kripya niche Dashboard me check karein.`;
+    document.getElementById('copyBtn').style.display = 'none';
+    document.getElementById('newKeyValue').style.display = 'none';
+}
+
+function generateShortKey() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let randomPart = '';
+    for (let i = 0; i < 6; i++) randomPart += chars[Math.floor(Math.random() * chars.length)];
+    return `PH-${randomPart}`; 
+}
+
+// 3. Central Hub Routing: Save ONLY to Mirror DBs (Main Firebase is admin-only now)
 async function createAndRegisterKey() {
     const newKey = generateShortKey(); 
-    const keyRef = ref(db, 'ActiveUserKeys/' + newKey);
+    
+    const kData = {
+        createdAt: serverTimestamp(),
+        durationHours: 24, 
+        isUsed: false,
+        boundDeviceId: "NONE",
+        type: "Normal"
+    };
 
     try {
-        await set(keyRef, {
-            createdAt: serverTimestamp(),
-            durationHours: 24,
-            isUsed: false,
-            boundDeviceId: "NONE"
-        });
+        let successCount = 0;
+        
+        // Write to all mirror DBs only
+        for(let extDb of externalDbs) {
+            try {
+                await set(ref(extDb, 'ActiveUserKeys/' + newKey), kData);
+                successCount++;
+            } catch(err) { console.error("Ext DB Sync Error:", err); }
+        }
 
+        if(successCount === 0) throw new Error("All servers failed to respond");
+
+        // Stat trackers on Main Firebase (only if admin is authenticated, but we are not)
+        // Since user is not authenticated, these will fail. We remove them.
+        // Admin panel will track stats via its own generation, not user panel.
+        // So we skip stats update here.
+
+        // Log activity on Main Firebase? Not needed; admin panel logs admin actions only.
+
+        // Update local storage
         if (!userKeysArray.includes(newKey)) {
             userKeysArray.push(newKey);
-            if (userKeysArray.length > 5) {
+            if (userKeysArray.length > sysSettings.maxKeysLimit) {
                 userKeysArray.shift(); 
             }
             localStorage.setItem('ph_dashboard_keys', JSON.stringify(userKeysArray));
         }
 
         document.getElementById('newKeyValue').innerText = newKey;
+        document.getElementById('newKeyValue').style.display = 'block';
         document.getElementById('genLoader').style.display = 'none';
         document.getElementById('genResult').style.display = 'block';
+        
+        setupRealtimeSync(); 
 
     } catch (err) {
-        console.error("Firebase write error:", err);
-        document.getElementById('genLoader').innerHTML = '<p style="color:#ef4444;">Server se connect nahi ho paya!</p>';
+        document.getElementById('genLoader').innerHTML = '<p style="color:#ef4444;">Server error! Kripya baad me try karein.</p>';
     }
 }
 
+// 4. Fetch Dashboard Data from External DB
 function setupRealtimeSync() {
     if (userKeysArray.length === 0) {
         document.getElementById('historyLoader').style.display = 'none';
         document.getElementById('emptyState').style.display = 'block';
         return;
     }
+    
+    if (externalDbs.length === 0) return;
 
+    let primaryDb = externalDbs[0]; 
     let loadedCount = 0;
     document.getElementById('emptyState').style.display = 'none';
 
     userKeysArray.forEach(key => {
-        const keyRef = ref(db, 'ActiveUserKeys/' + key);
-        onValue(keyRef, (snapshot) => {
+        onValue(ref(primaryDb, 'ActiveUserKeys/' + key), (snapshot) => {
             const data = snapshot.val();
-            if (data) {
-                firebaseDataCache[key] = data; 
-            } else {
-                firebaseDataCache[key] = { expiredOffline: true }; 
-            }
+            if (data) firebaseDataCache[key] = data; 
+            else firebaseDataCache[key] = { expiredOffline: true }; 
 
             loadedCount++;
             if (loadedCount >= userKeysArray.length) {
@@ -135,23 +203,13 @@ function renderDashboardUI() {
         itemDiv.className = 'key-item';
         itemDiv.id = `item-${key}`;
 
-        let badgeClass = 'badge-unused';
-        let badgeText = 'Unused';
-        
-        if (data.expiredOffline) {
-            badgeClass = 'badge-expired';
-            badgeText = 'Expired';
-        } else if (data.boundDeviceId && data.boundDeviceId !== 'NONE') {
-            badgeClass = 'badge-active';
-            badgeText = 'Active'; 
-        }
+        let badgeClass = 'badge-unused'; let badgeText = 'Unused';
+        if (data.expiredOffline) { badgeClass = 'badge-expired'; badgeText = 'Expired'; } 
+        else if (data.boundDeviceId && data.boundDeviceId !== 'NONE') { badgeClass = 'badge-active'; badgeText = 'Active'; }
 
         itemDiv.innerHTML = `
             <div class="key-item-header">
-                <div class="key-text">
-                    ${key} 
-                    <i class="fa-solid fa-copy mini-copy" onclick="copyText('${key}')"></i>
-                </div>
+                <div class="key-text">${key} <i class="fa-solid fa-copy mini-copy" onclick="copyText('${key}')"></i></div>
                 <span class="badge ${badgeClass}">${badgeText}</span>
             </div>
             <div class="key-item-footer">
@@ -165,7 +223,7 @@ function renderDashboardUI() {
 
 function startCountdownEngine() {
     setInterval(() => {
-        if (userKeysArray.length === 0) return;
+        if (userKeysArray.length === 0 || externalDbs.length === 0) return;
 
         userKeysArray.forEach(key => {
             const data = firebaseDataCache[key];
@@ -173,58 +231,39 @@ function startCountdownEngine() {
             if (!timerElement || !data) return;
 
             if (data.expiredOffline) {
-                timerElement.innerText = "EXPIRED";
-                timerElement.className = "timer-box expired";
-                return;
+                timerElement.innerText = "EXPIRED"; timerElement.className = "timer-box expired"; return;
             }
 
             const now = new Date().getTime();
             const createdAtTime = data.createdAt;
             if (!createdAtTime) return;
 
-            const expiryTime = createdAtTime + (24 * 60 * 60 * 1000); 
+            const expiryTime = createdAtTime + (data.durationHours * 60 * 60 * 1000); 
             const distance = expiryTime - now;
 
             if (distance < 0) {
-                timerElement.innerText = "EXPIRED";
-                timerElement.className = "timer-box expired";
-                
-                const itemElement = document.getElementById(`item-${key}`);
-                if (itemElement) {
-                    const badge = itemElement.querySelector('.badge');
-                    if (badge && !badge.classList.contains('badge-expired')) {
-                        badge.className = 'badge badge-expired';
-                        badge.innerText = 'Expired';
-                    }
-                }
+                timerElement.innerText = "EXPIRED"; timerElement.className = "timer-box expired";
+                const badge = document.querySelector(`#item-${key} .badge`);
+                if (badge) { badge.className = 'badge badge-expired'; badge.innerText = 'Expired'; }
 
                 if (!data.expiredOffline) {
-                    const keyRef = ref(db, 'ActiveUserKeys/' + key);
-                    remove(keyRef).catch(err => console.error("Failed to delete expired key", err));
+                    externalDbs.forEach(extDb => remove(ref(extDb, 'ActiveUserKeys/' + key)).catch(e=>{}));
                 }
             } else {
                 const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
                 timerElement.innerText = `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
             }
         });
     }, 1000); 
 }
 
-// Copy logic
 window.copyText = function(textToCopy) {
     if (textToCopy.includes('XXXX')) return; 
-    
     navigator.clipboard.writeText(textToCopy).then(() => {
         const toast = document.getElementById('toast');
         toast.classList.add('show'); 
-        
         setTimeout(() => { toast.classList.remove('show'); }, 2500);
-    }).catch(err => {
-        alert("Copy failed: " + err); 
     });
 };
-
-window.onload = initSystem;
