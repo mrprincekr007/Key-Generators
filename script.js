@@ -4,7 +4,16 @@ import { db } from "./firebase-config.js";
 import { getDatabase, ref, set, onValue, serverTimestamp, remove, push } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
 // System State Variables
-let sysSettings = { cooldownHours: 24, maxKeysLimit: 5, maintenanceMode: false, userParam: 'secure=true', adminParam: 'admin=true', defaultKeyDuration: 24 };
+let sysSettings = { 
+    cooldownHours: 24, 
+    maxKeysLimit: 5, 
+    maintenanceMode: false, 
+    userParam: 'secure=true', 
+    adminParam: 'admin=true', 
+    defaultKeyDuration: 24,
+    defaultKeyTier: 'normal',
+    defaultKeyLifetime: false
+};
 let externalDbs = []; 
 let isSettingsLoaded = false;
 let isHubLoaded = false;
@@ -18,11 +27,9 @@ onValue(ref(db, 'SystemSettings'), (snapshot) => {
     if(snapshot.exists()) {
         const data = snapshot.val();
         sysSettings = { ...sysSettings, ...data };
-        // Ensure defaultKeyDuration is set
-        if (!data.defaultKeyDuration) {
-            // If not set, set default to 24 hours
-            sysSettings.defaultKeyDuration = 24;
-        }
+        if (!data.defaultKeyDuration) sysSettings.defaultKeyDuration = 24;
+        if (!data.defaultKeyTier) sysSettings.defaultKeyTier = 'normal';
+        console.log("📋 Loaded settings:", sysSettings);
     }
     isSettingsLoaded = true;
     triggerSystemInit();
@@ -107,32 +114,44 @@ function showAntiSpamUI() {
     document.getElementById('newKeyValue').style.display = 'none';
 }
 
+// ==========================================
+// GENERATE KEY WITH ADMIN SETTINGS
+// ==========================================
 function generateShortKey() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let randomPart = '';
     for (let i = 0; i < 6; i++) randomPart += chars[Math.floor(Math.random() * chars.length)];
-    return `PH-${randomPart}`; 
+    return randomPart; 
 }
 
-// 3. Central Hub Routing: Save ONLY to Mirror DBs
 async function createAndRegisterKey() {
-    const newKey = generateShortKey(); 
-    
-    // Read default duration from SystemSettings (set by admin)
+    // Read settings from SystemSettings (set by admin)
     const defaultDuration = sysSettings.defaultKeyDuration || 24;
+    const defaultTier = sysSettings.defaultKeyTier || 'normal';
+    const isVip = defaultTier === 'vip';
+    
+    // Generate key with tier prefix
+    const prefix = isVip ? 'VIP-' : 'PH-';
+    const newKey = prefix + generateShortKey();
+    
+    // Set duration
+    let duration = defaultDuration;
+    if (sysSettings.defaultKeyLifetime) {
+        duration = 99999;
+    }
     
     const kData = {
         createdAt: serverTimestamp(),
-        durationHours: defaultDuration,
+        durationHours: duration,
         isUsed: false,
         boundDeviceId: "NONE",
-        type: "Normal"
+        type: isVip ? "VIP" : "Normal"
     };
 
     try {
         let successCount = 0;
         
-        // Write to all mirror DBs only
+        // Write to all mirror DBs
         for(let extDb of externalDbs) {
             try {
                 await set(ref(extDb, 'ActiveUserKeys/' + newKey), kData);
