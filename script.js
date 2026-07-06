@@ -1,18 +1,13 @@
 // script.js
 import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
 import { db } from "./firebase-config.js"; 
-import { getDatabase, ref, set, onValue, serverTimestamp, remove, push } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+// Yahan increment import kiya gaya hai count badhane ke liye
+import { getDatabase, ref, set, onValue, serverTimestamp, remove, update, increment } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
-// System State Variables
 let sysSettings = { 
-    cooldownHours: 24, 
-    maxKeysLimit: 5, 
-    maintenanceMode: false, 
-    userParam: 'secure=true', 
-    adminParam: 'admin=true', 
-    defaultKeyDuration: 24,
-    defaultKeyTier: 'normal',
-    defaultKeyLifetime: false
+    cooldownHours: 24, maxKeysLimit: 5, maintenanceMode: false, 
+    userParam: 'secure=true', adminParam: 'admin=true', 
+    defaultKeyDuration: 24, defaultKeyTier: 'normal', defaultKeyLifetime: false
 };
 let externalDbs = []; 
 let isSettingsLoaded = false;
@@ -21,13 +16,8 @@ let initFired = false;
 
 let firebaseDataCache = {};
 let userKeysArray = JSON.parse(localStorage.getItem('ph_dashboard_keys')) || [];
-
-// Cooldown tracking: array of timestamps when keys were generated
 let genTimestamps = JSON.parse(localStorage.getItem('ph_gen_timestamps')) || [];
 
-// ==========================================
-// 1. Fetch Settings & Mirrors
-// ==========================================
 onValue(ref(db, 'SystemSettings'), (snapshot) => {
     if(snapshot.exists()) {
         const data = snapshot.val();
@@ -45,8 +35,7 @@ onValue(ref(db, 'ConnectedFirebases'), (snapshot) => {
         snapshot.forEach(child => {
             try {
                 let app;
-                try { app = getApp(child.key); } 
-                catch(e) { app = initializeApp(child.val(), child.key); }
+                try { app = getApp(child.key); } catch(e) { app = initializeApp(child.val(), child.key); }
                 externalDbs.push(getDatabase(app));
             } catch(e) { console.error("Mirror Load Error", e); }
         });
@@ -56,9 +45,6 @@ onValue(ref(db, 'ConnectedFirebases'), (snapshot) => {
     if(initFired) setupRealtimeSync(); 
 });
 
-// ==========================================
-// 2. Initialize
-// ==========================================
 function triggerSystemInit() {
     if(isSettingsLoaded && isHubLoaded && !initFired) {
         initFired = true;
@@ -93,24 +79,19 @@ function checkAccessAndRun() {
             return;
         }
 
-        // ---- FIXED CYCLE COOLDOWN & LIMIT CHECK ----
         const now = Date.now();
         const cooldownMs = sysSettings.cooldownHours * 60 * 60 * 1000;
         const maxKeys = sysSettings.maxKeysLimit;
 
-        // Step 1: Check if the current cycle has expired (based on the FIRST key's time)
         if (genTimestamps.length > 0) {
             const firstKeyTime = genTimestamps[0];
             if (now - firstKeyTime >= cooldownMs) {
-                // Cooldown finished! Refresh the limit completely.
                 genTimestamps = [];
                 localStorage.setItem('ph_gen_timestamps', JSON.stringify(genTimestamps));
             }
         }
 
-        // Step 2: Check if limit is reached in the current active cycle
         if (genTimestamps.length >= maxKeys && !isAdminAccess) {
-            // Limit reached – show anti-spam UI and calculate remaining time based on the FIRST key
             const firstKeyTime = genTimestamps[0];
             const timeLeft = cooldownMs - (now - firstKeyTime);
             showAntiSpamUI(timeLeft);
@@ -119,12 +100,11 @@ function checkAccessAndRun() {
             return;
         }
 
-        // If admin access, bypass limits. Normal user gets added to cycle.
         if (isAdminAccess) {
             createAndRegisterKey();
         } else {
             createAndRegisterKey();
-            genTimestamps.push(now); // Pehli key banne par time save hoga
+            genTimestamps.push(now); 
             localStorage.setItem('ph_gen_timestamps', JSON.stringify(genTimestamps));
         }
     }
@@ -133,29 +113,21 @@ function checkAccessAndRun() {
     startCountdownEngine();
 }
 
-// ==========================================
-// 3. Anti‑Spam UI
-// ==========================================
 function showAntiSpamUI(timeLeftMs) {
     document.getElementById('genLoader').style.display = 'none';
     document.getElementById('genResult').style.display = 'block';
     document.getElementById('genTitle').innerHTML = `<i class="fa-solid fa-shield" style="color: #facc15;"></i> Limit Reached`;
     
-    // Show countdown until refresh
     const hours = Math.floor(timeLeftMs / (1000 * 60 * 60));
     const minutes = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((timeLeftMs % (1000 * 60)) / 1000);
     const timeStr = `${hours}h ${minutes}m ${seconds}s`;
     
-    document.getElementById('genDesc').innerText = 
-        `Limit Reached (${sysSettings.maxKeysLimit} Keys / ${sysSettings.cooldownHours} Hours). Refresh in ${timeStr}.`;
+    document.getElementById('genDesc').innerText = `Limit Reached (${sysSettings.maxKeysLimit} Keys / ${sysSettings.cooldownHours} Hours). Refresh in ${timeStr}.`;
     document.getElementById('copyBtn').style.display = 'none';
     document.getElementById('newKeyValue').style.display = 'none';
 }
 
-// ==========================================
-// 4. Generate Key
-// ==========================================
 function generateShortKey() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let randomPart = '';
@@ -196,6 +168,14 @@ async function createAndRegisterKey() {
 
         if(successCount === 0) throw new Error("All servers failed to respond");
 
+        // TRACK ALL-TIME KEYS IN MAIN FIREBASE USING `increment()`
+        try {
+            await update(ref(db, 'SystemStats'), { totalLifetimeGenerated: increment(1) }).catch(e=>console.log(e));
+            const d = new Date();
+            const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            await update(ref(db, 'SystemStats/DailyGenerations'), { [ds]: increment(1) }).catch(e=>console.log(e));
+        } catch(e) { console.log("Stat Update Error", e); }
+
         if (!userKeysArray.includes(newKey)) {
             userKeysArray.push(newKey);
             if (userKeysArray.length > sysSettings.maxKeysLimit * 2) {
@@ -204,7 +184,6 @@ async function createAndRegisterKey() {
             localStorage.setItem('ph_dashboard_keys', JSON.stringify(userKeysArray));
         }
 
-        // Update UI
         document.getElementById('newKeyValue').innerText = newKey;
         document.getElementById('newKeyValue').style.display = 'block';
         
@@ -228,9 +207,6 @@ async function createAndRegisterKey() {
     }
 }
 
-// ==========================================
-// 5. Dashboard & Countdown
-// ==========================================
 function setupRealtimeSync() {
     if (userKeysArray.length === 0) {
         document.getElementById('historyLoader').style.display = 'none';
@@ -292,7 +268,6 @@ function renderDashboardUI() {
 
 function startCountdownEngine() {
     setInterval(() => {
-        // Update key timers
         if (userKeysArray.length > 0 && externalDbs.length > 0) {
             userKeysArray.forEach(key => {
                 const data = firebaseDataCache[key];
@@ -313,8 +288,7 @@ function startCountdownEngine() {
                 if (!createdAtTime) return;
 
                 if (data.durationHours === 99999) {
-                    timerElement.innerText = "♾️ Lifetime";
-                    timerElement.className = "timer-box";
+                    timerElement.innerText = "♾️ Lifetime"; timerElement.className = "timer-box";
                     return;
                 }
 
@@ -338,7 +312,6 @@ function startCountdownEngine() {
             });
         }
 
-        // Anti‑spam timer ko live update karna
         const genTitle = document.getElementById('genTitle');
         if (genTitle && genTitle.innerHTML.includes('Limit Reached')) {
             const now = Date.now();
@@ -346,16 +319,12 @@ function startCountdownEngine() {
             if (genTimestamps.length > 0) {
                 const firstKeyTime = genTimestamps[0];
                 const timeLeft = cooldownMs - (now - firstKeyTime);
-                
                 if (timeLeft > 0) {
                     const hours = Math.floor(timeLeft / (1000 * 60 * 60));
                     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                    const timeStr = `${hours}h ${minutes}m ${seconds}s`;
-                    document.getElementById('genDesc').innerText = 
-                        `Limit Reached (${sysSettings.maxKeysLimit} Keys / ${sysSettings.cooldownHours} Hours). Refresh in ${timeStr}.`;
+                    document.getElementById('genDesc').innerText = `Limit Reached (${sysSettings.maxKeysLimit} Keys / ${sysSettings.cooldownHours} Hours). Refresh in ${hours}h ${minutes}m ${seconds}s.`;
                 } else {
-                    // Timer khatam hote hi refresh, taaki user wapas key bana sake!
                     genTimestamps = [];
                     localStorage.setItem('ph_gen_timestamps', JSON.stringify(genTimestamps));
                     window.location.reload();
@@ -365,9 +334,6 @@ function startCountdownEngine() {
     }, 1000); 
 }
 
-// ==========================================
-// 6. Copy helper
-// ==========================================
 window.copyText = function(textToCopy) {
     if (textToCopy.includes('XXXX')) return; 
     navigator.clipboard.writeText(textToCopy).then(() => {
