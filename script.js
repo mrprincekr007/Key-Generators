@@ -136,8 +136,10 @@ async function createAndRegisterKey() {
     
     // Set duration
     let duration = defaultDuration;
+    let isLifetime = false;
     if (sysSettings.defaultKeyLifetime) {
         duration = 99999;
+        isLifetime = true;
     }
     
     console.log(`🔑 Generating key: ${newKey} with duration ${duration}h, tier ${defaultTier}`);
@@ -172,8 +174,21 @@ async function createAndRegisterKey() {
             localStorage.setItem('ph_dashboard_keys', JSON.stringify(userKeysArray));
         }
 
+        // Display the generated key and dynamic description
         document.getElementById('newKeyValue').innerText = newKey;
         document.getElementById('newKeyValue').style.display = 'block';
+        
+        // Update description based on duration
+        const descEl = document.getElementById('genDesc');
+        if (isLifetime) {
+            descEl.innerText = 'Valid for Lifetime (Never Expires)';
+        } else if (duration >= 24 && duration % 24 === 0) {
+            const days = duration / 24;
+            descEl.innerText = `Valid for the next ${days} Day${days > 1 ? 's' : ''}`;
+        } else {
+            descEl.innerText = `Valid for the next ${duration} Hour${duration > 1 ? 's' : ''}`;
+        }
+        
         document.getElementById('genLoader').style.display = 'none';
         document.getElementById('genResult').style.display = 'block';
         
@@ -254,7 +269,13 @@ function startCountdownEngine() {
             if (!timerElement || !data) return;
 
             if (data.expiredOffline) {
-                timerElement.innerText = "EXPIRED"; timerElement.className = "timer-box expired"; return;
+                timerElement.innerText = "EXPIRED"; timerElement.className = "timer-box expired"; 
+                // Remove from mirrors if not already
+                if (!data._removed) {
+                    externalDbs.forEach(extDb => remove(ref(extDb, 'ActiveUserKeys/' + key)).catch(e=>{}));
+                    data._removed = true;
+                }
+                return;
             }
 
             const now = new Date().getTime();
@@ -264,13 +285,21 @@ function startCountdownEngine() {
             const expiryTime = createdAtTime + (data.durationHours * 60 * 60 * 1000); 
             const distance = expiryTime - now;
 
+            if (data.durationHours === 99999) {
+                // Lifetime key – never expires
+                timerElement.innerText = "♾️ Lifetime";
+                timerElement.className = "timer-box";
+                return;
+            }
+
             if (distance < 0) {
                 timerElement.innerText = "EXPIRED"; timerElement.className = "timer-box expired";
                 const badge = document.querySelector(`#item-${key} .badge`);
                 if (badge) { badge.className = 'badge badge-expired'; badge.innerText = 'Expired'; }
-
-                if (!data.expiredOffline) {
+                // Remove from mirrors
+                if (!data._removed) {
                     externalDbs.forEach(extDb => remove(ref(extDb, 'ActiveUserKeys/' + key)).catch(e=>{}));
+                    data._removed = true;
                 }
             } else {
                 const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
