@@ -1,8 +1,8 @@
 // script.js
 import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
 import { db } from "./firebase-config.js"; 
-// Yahan get aur child import kiya hai taaki count bulletproof tarike se badhe
-import { getDatabase, ref, set, onValue, serverTimestamp, remove, update, get, child } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+// Yahan increment import kiya gaya hai (Bina read kiye count badhane ke liye)
+import { getDatabase, ref, set, onValue, serverTimestamp, remove, update, increment } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
 
 let sysSettings = { 
     cooldownHours: 24, maxKeysLimit: 5, maintenanceMode: false, 
@@ -168,20 +168,14 @@ async function createAndRegisterKey() {
 
         if(successCount === 0) throw new Error("All servers failed to respond");
 
-        // TRACK ALL-TIME KEYS IN MAIN FIREBASE - BULLETPROOF METHOD
+        // TRACK ALL-TIME KEYS IN MAIN FIREBASE (BULLETPROOF FIX)
         try {
-            const statsRef = ref(db, 'SystemStats');
-            get(child(statsRef, 'totalLifetimeGenerated')).then(snap => {
-                let total = snap.exists() ? snap.val() : 0;
-                set(child(statsRef, 'totalLifetimeGenerated'), total + 1);
-            });
+            // increment(1) sidha command bhejta hai ki pichli value me +1 kar do, read karne ki zaroorat nahi padti!
+            set(ref(db, 'SystemStats/totalLifetimeGenerated'), increment(1)).catch(e => console.error("Stat error 1:", e));
 
             const d = new Date();
             const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-            get(child(statsRef, `DailyGenerations/${ds}`)).then(snap => {
-                let count = snap.exists() ? snap.val() : 0;
-                set(child(statsRef, `DailyGenerations/${ds}`), count + 1);
-            });
+            set(ref(db, `SystemStats/DailyGenerations/${ds}`), increment(1)).catch(e => console.error("Stat error 2:", e));
         } catch(e) { console.log("Stat Update Error", e); }
 
         if (!userKeysArray.includes(newKey)) {
