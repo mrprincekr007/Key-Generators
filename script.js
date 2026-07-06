@@ -29,7 +29,7 @@ onValue(ref(db, 'SystemSettings'), (snapshot) => {
         sysSettings = { ...sysSettings, ...data };
         if (!data.defaultKeyDuration) sysSettings.defaultKeyDuration = 24;
         if (!data.defaultKeyTier) sysSettings.defaultKeyTier = 'normal';
-        console.log("📋 Loaded settings:", sysSettings);
+        console.log("📋 Loaded settings from admin:", sysSettings);
     }
     isSettingsLoaded = true;
     triggerSystemInit();
@@ -125,7 +125,7 @@ function generateShortKey() {
 }
 
 async function createAndRegisterKey() {
-    // Read settings from SystemSettings (set by admin)
+    // 🔥 Read settings from SystemSettings (set by admin)
     const defaultDuration = sysSettings.defaultKeyDuration || 24;
     const defaultTier = sysSettings.defaultKeyTier || 'normal';
     const isVip = defaultTier === 'vip';
@@ -139,6 +139,8 @@ async function createAndRegisterKey() {
     if (sysSettings.defaultKeyLifetime) {
         duration = 99999;
     }
+    
+    console.log(`🔑 Generating key: ${newKey} with duration ${duration}h, tier ${defaultTier}`);
     
     const kData = {
         createdAt: serverTimestamp(),
