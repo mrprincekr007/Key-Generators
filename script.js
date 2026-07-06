@@ -34,7 +34,6 @@ onValue(ref(db, 'SystemSettings'), (snapshot) => {
         sysSettings = { ...sysSettings, ...data };
         if (!data.defaultKeyDuration) sysSettings.defaultKeyDuration = 24;
         if (!data.defaultKeyTier) sysSettings.defaultKeyTier = 'normal';
-        console.log("📋 Loaded settings:", sysSettings);
     }
     isSettingsLoaded = true;
     triggerSystemInit();
@@ -94,40 +93,38 @@ function checkAccessAndRun() {
             return;
         }
 
-        // ---- Cooldown & Limit Check ----
+        // ---- FIXED CYCLE COOLDOWN & LIMIT CHECK ----
         const now = Date.now();
         const cooldownMs = sysSettings.cooldownHours * 60 * 60 * 1000;
         const maxKeys = sysSettings.maxKeysLimit;
 
-        // Filter timestamps that are within the cooldown window
-        const recentTimestamps = genTimestamps.filter(ts => (now - ts) < cooldownMs);
-        const recentCount = recentTimestamps.length;
-
-        // Clean old timestamps (older than cooldown) from array
-        if (recentTimestamps.length !== genTimestamps.length) {
-            genTimestamps = recentTimestamps;
-            localStorage.setItem('ph_gen_timestamps', JSON.stringify(genTimestamps));
+        // Step 1: Check if the current cycle has expired (based on the FIRST key's time)
+        if (genTimestamps.length > 0) {
+            const firstKeyTime = genTimestamps[0];
+            if (now - firstKeyTime >= cooldownMs) {
+                // Cooldown finished! Refresh the limit completely.
+                genTimestamps = [];
+                localStorage.setItem('ph_gen_timestamps', JSON.stringify(genTimestamps));
+            }
         }
 
-        // Check if limit reached
-        if (recentCount >= maxKeys && !isAdminAccess) {
-            // Limit reached – show anti‑spam with timer
-            const oldestTs = recentTimestamps[0] || now;
-            const timeLeft = cooldownMs - (now - oldestTs);
+        // Step 2: Check if limit is reached in the current active cycle
+        if (genTimestamps.length >= maxKeys && !isAdminAccess) {
+            // Limit reached – show anti-spam UI and calculate remaining time based on the FIRST key
+            const firstKeyTime = genTimestamps[0];
+            const timeLeft = cooldownMs - (now - firstKeyTime);
             showAntiSpamUI(timeLeft);
             setupRealtimeSync();
             startCountdownEngine();
             return;
         }
 
-        // If admin access, bypass limits (admin can always generate)
+        // If admin access, bypass limits. Normal user gets added to cycle.
         if (isAdminAccess) {
             createAndRegisterKey();
         } else {
-            // Normal user – generate key and store timestamp
             createAndRegisterKey();
-            // Add current timestamp to tracking
-            genTimestamps.push(now);
+            genTimestamps.push(now); // Pehli key banne par time save hoga
             localStorage.setItem('ph_gen_timestamps', JSON.stringify(genTimestamps));
         }
     }
@@ -137,21 +134,21 @@ function checkAccessAndRun() {
 }
 
 // ==========================================
-// 3. Anti‑Spam UI with dynamic timer
+// 3. Anti‑Spam UI
 // ==========================================
 function showAntiSpamUI(timeLeftMs) {
     document.getElementById('genLoader').style.display = 'none';
     document.getElementById('genResult').style.display = 'block';
     document.getElementById('genTitle').innerHTML = `<i class="fa-solid fa-shield" style="color: #facc15;"></i> Limit Reached`;
     
-    // Show countdown until reset
+    // Show countdown until refresh
     const hours = Math.floor(timeLeftMs / (1000 * 60 * 60));
     const minutes = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((timeLeftMs % (1000 * 60)) / 1000);
     const timeStr = `${hours}h ${minutes}m ${seconds}s`;
     
     document.getElementById('genDesc').innerText = 
-        `You have reached the maximum keys limit (${sysSettings.maxKeysLimit}) within ${sysSettings.cooldownHours} hours. Please wait ${timeStr} before generating more.`;
+        `Limit Reached (${sysSettings.maxKeysLimit} Keys / ${sysSettings.cooldownHours} Hours). Refresh in ${timeStr}.`;
     document.getElementById('copyBtn').style.display = 'none';
     document.getElementById('newKeyValue').style.display = 'none';
 }
@@ -202,7 +199,7 @@ async function createAndRegisterKey() {
         if (!userKeysArray.includes(newKey)) {
             userKeysArray.push(newKey);
             if (userKeysArray.length > sysSettings.maxKeysLimit * 2) {
-                userKeysArray.shift(); // keep only last few
+                userKeysArray.shift();
             }
             localStorage.setItem('ph_dashboard_keys', JSON.stringify(userKeysArray));
         }
@@ -341,24 +338,26 @@ function startCountdownEngine() {
             });
         }
 
-        // Also update the anti‑spam timer if it's showing
+        // Anti‑spam timer ko live update karna
         const genTitle = document.getElementById('genTitle');
         if (genTitle && genTitle.innerHTML.includes('Limit Reached')) {
             const now = Date.now();
             const cooldownMs = sysSettings.cooldownHours * 60 * 60 * 1000;
-            const recentTimestamps = genTimestamps.filter(ts => (now - ts) < cooldownMs);
-            if (recentTimestamps.length >= sysSettings.maxKeysLimit) {
-                const oldestTs = recentTimestamps[0] || now;
-                const timeLeft = cooldownMs - (now - oldestTs);
+            if (genTimestamps.length > 0) {
+                const firstKeyTime = genTimestamps[0];
+                const timeLeft = cooldownMs - (now - firstKeyTime);
+                
                 if (timeLeft > 0) {
                     const hours = Math.floor(timeLeft / (1000 * 60 * 60));
                     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
                     const timeStr = `${hours}h ${minutes}m ${seconds}s`;
                     document.getElementById('genDesc').innerText = 
-                        `Limit reached. Please wait ${timeStr} before generating more.`;
+                        `Limit Reached (${sysSettings.maxKeysLimit} Keys / ${sysSettings.cooldownHours} Hours). Refresh in ${timeStr}.`;
                 } else {
-                    // Time expired – reload to reset
+                    // Timer khatam hote hi refresh, taaki user wapas key bana sake!
+                    genTimestamps = [];
+                    localStorage.setItem('ph_gen_timestamps', JSON.stringify(genTimestamps));
                     window.location.reload();
                 }
             }
