@@ -91,6 +91,7 @@ function triggerSystemInit() {
 function updateLimitsDisplay() {
     const el = document.getElementById('limitsInfo');
     if (!el) return;
+    if (sysSettings.showLimitsOnUser === false) { el.style.display = 'none'; return; }
     const cd = sysSettings.cooldownHours || 24;
     const mk = sysSettings.maxKeysLimit || 5;
     const used = genTimestamps.length;
