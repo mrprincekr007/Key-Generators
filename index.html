@@ -4,14 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium Tech Key Generator</title>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <div id="offlineIndicator">
+        <i class="fa-solid fa-wifi-slash"></i>
+        <span>You are offline. Some features may not work.</span>
+    </div>
+
     <div class="container">
         
+        <div class="top-controls">
+            <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle Theme">
+                <i class="fa-solid fa-sun"></i>
+            </button>
+            <button class="icon-btn" onclick="showKeyHistory()" title="Key History">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+            </button>
+        </div>
+
         <div class="card" id="maintenanceCard" style="display: none; border-color: #facc15;">
             <i class="fa-solid fa-person-digging" style="font-size: 50px; color: #facc15; margin-bottom: 15px; display:block; text-align:center;"></i>
             <h2 style="color: #fff; margin-bottom: 10px; text-align:center;">Maintenance Break</h2>
@@ -23,6 +36,8 @@
             <h2 style="color: #fff; margin-bottom: 10px; text-align:center;">Servers Offline</h2>
             <p style="color: #94a3b8; font-size: 14px; text-align:center;" id="errorMsg">Admin ne abhi tak koi database server connect nahi kiya hai.</p>
         </div>
+
+        <div id="expiryWarning" class="expiry-warning" style="display: none;"></div>
 
         <div class="card" id="generationCard" style="display: none;">
             <div id="genLoader" class="loader-container">
@@ -38,9 +53,14 @@
                 
                 <div class="key-display" id="newKeyValue">PH-XXXXXX</div>
                 
-                <button class="btn-copy" id="copyBtn" onclick="copyText(document.getElementById('newKeyValue').innerText)">
-                    <i class="fa-solid fa-clipboard"></i> Copy to App
-                </button>
+                <div class="key-actions">
+                    <button class="btn-copy" id="copyBtn" onclick="copyText(document.getElementById('newKeyValue').innerText)">
+                        <i class="fa-solid fa-clipboard"></i> Copy
+                    </button>
+                    <button class="btn-share" id="shareBtn" style="display: none;" onclick="shareKey(document.getElementById('newKeyValue').innerText)">
+                        <i class="fa-solid fa-share-nodes"></i> Share
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -74,7 +94,17 @@
 
     </div>
 
-    <div class="toast" id="toast"><i class="fa-solid fa-check"></i> Key copied !</div>
+    <div class="toast" id="toast"><i class="fa-solid fa-check"></i> Copied!</div>
+
+    <div class="history-modal" id="historyModal">
+        <div class="history-modal-content">
+            <div class="history-modal-header">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> All Generated Keys</h3>
+                <button class="icon-btn" onclick="closeHistoryModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="history-modal-body" id="historyList"></div>
+        </div>
+    </div>
 
     <script type="module" src="script.js"></script>
 </body>
