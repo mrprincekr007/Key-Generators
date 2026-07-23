@@ -53,10 +53,13 @@ activeUnsubscribers.push(
         if(snapshot.exists()) {
             const data = snapshot.val();
             sysSettings = { ...sysSettings, ...data };
+            sysSettings.cooldownHours = parseInt(data.cooldownHours) || 24;
+            sysSettings.maxKeysLimit = parseInt(data.maxKeysLimit) || 5;
             if (!data.defaultKeyDuration) sysSettings.defaultKeyDuration = 24;
             if (!data.defaultKeyTier) sysSettings.defaultKeyTier = 'normal';
         }
         isSettingsLoaded = true;
+        updateLimitsDisplay();
         triggerSystemInit();
     })
 );
@@ -83,6 +86,16 @@ function triggerSystemInit() {
         initFired = true;
         checkAccessAndRun();
     }
+}
+
+function updateLimitsDisplay() {
+    const el = document.getElementById('limitsInfo');
+    if (!el) return;
+    const cd = sysSettings.cooldownHours || 24;
+    const mk = sysSettings.maxKeysLimit || 5;
+    const used = genTimestamps.length;
+    el.innerHTML = `<i class="fa-solid fa-circle-info"></i> Limit: <strong>${mk}</strong> keys / <strong>${cd}h</strong> cooldown | Used: <strong>${used}/${mk}</strong>`;
+    el.style.display = 'block';
 }
 
 // ===== ACCESS CONTROL =====
@@ -137,6 +150,7 @@ function checkAccessAndRun() {
         if (!isAdminAccess) {
             genTimestamps.push(now); 
             safeSet('ph_gen_timestamps', genTimestamps);
+            updateLimitsDisplay();
         }
     }
     
@@ -154,6 +168,7 @@ function showAntiSpamUI(timeLeftMs) {
     document.getElementById('genDesc').innerText = `Limit Reached (${sysSettings.maxKeysLimit} Keys / ${sysSettings.cooldownHours} Hours). Refresh in ${hours}h ${minutes}m ${seconds}s.`;
     document.getElementById('copyBtn').style.display = 'none';
     document.getElementById('newKeyValue').style.display = 'none';
+    updateLimitsDisplay();
 }
 
 // ===== KEY GENERATION =====
