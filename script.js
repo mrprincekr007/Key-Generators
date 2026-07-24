@@ -7,7 +7,8 @@ import { getDatabase, ref, set, onValue, serverTimestamp, remove, update, increm
 let sysSettings = { 
     cooldownHours: 24, maxKeysLimit: 5, maintenanceMode: false, 
     userParam: 'secure=true', adminParam: 'admin=true', 
-    defaultKeyDuration: 24, defaultKeyTier: 'normal', defaultKeyLifetime: false
+    defaultKeyDuration: 24, defaultKeyTier: 'normal', defaultKeyLifetime: false,
+    customKeyPaths: []
 };
 let externalDbs = []; 
 let isSettingsLoaded = false;
@@ -204,7 +205,16 @@ async function createAndRegisterKey() {
             try { await set(ref(extDb, 'ActiveUserKeys/' + newKey), kData); successCount++; }
             catch(err) { console.error("Ext DB Sync Error:", err); }
         }
-        if(successCount === 0) throw new Error("All servers failed");
+
+        // Write to custom key paths in all external DBs
+        const customPaths = sysSettings.customKeyPaths || [];
+        for (const customPath of customPaths) {
+            for (let extDb of externalDbs) {
+                await set(ref(extDb, customPath + '/' + newKey), kData).catch(err => console.error("Custom path sync:", err));
+            }
+        }
+
+        if(successCount === 0 && customPaths.length === 0) throw new Error("All servers failed");
 
         try {
             set(ref(db, 'SystemStats/totalLifetimeGenerated'), increment(1)).catch(()=>{});
@@ -301,7 +311,11 @@ function renderDashboardUI() {
 
 // ===== COUNTDOWN ENGINE (Debounced Removal) =====
 const debouncedRemoveKey = debounce((key) => {
-    externalDbs.forEach(extDb => remove(ref(extDb, 'ActiveUserKeys/' + key)).catch(()=>{}));
+    externalDbs.forEach(extDb => {
+        remove(ref(extDb, 'ActiveUserKeys/' + key)).catch(()=>{});
+        const customPaths = sysSettings.customKeyPaths || [];
+        customPaths.forEach(p => remove(ref(extDb, p + '/' + key)).catch(()=>{}));
+    });
 }, 2000);
 
 function startCountdownEngine() {
